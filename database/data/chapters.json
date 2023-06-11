@@ -1,0 +1,26 @@
+[
+  {
+    "_id": 1,
+    "title": "Romance Dawn - The Dawn of the Adventure",
+    "volume": 1,
+    "chapter": 1,
+    "pages": 53,
+    "release": "July 19, 1997"
+  },
+  {
+    "_id": 2,
+    "title": "That Guy, \"Straw Hat Luffy\"",
+    "volume": 1,
+    "chapter": 2,
+    "pages": 23,
+    "release": "July 28, 1997"
+  },
+  {
+    "_id": 3,
+    "title": "Introducing Pirate Hunter Zoro",
+    "volume": 1,
+    "chapter": 3,
+    "pages": 21,
+    "release": "August 4, 1997"
+  }
+]

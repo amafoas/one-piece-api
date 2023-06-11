@@ -1,0 +1,33 @@
+[
+  {
+    "_id": "straw_hat_pirates",
+    "name": "Straw Hat Pirates",
+    "romanized_name": "Mugiwara no Ichimi",
+    "first_appearance": [
+      "Chapter 5",
+      "Episode 3"
+    ],
+    "captain": "Monkey D Luffy",
+    "total_bounty": "8,816,001,000",
+    "main_ship": "Thousand Sunny",
+    "members": [
+      "Monkey D Luffy",
+      "Roronoa Zoro",
+      "Nami",
+      "Usopp",
+      "Sanji",
+      "Tony Tony Chopper",
+      "Nico Robin",
+      "Franky",
+      "Brook",
+      "Jinbe",
+      "Nefertari Vivi"
+    ],
+    "allies": [
+      "Ninja-Pirate-Mink-Samurai Alliance",
+      "Galley-La Company",
+      "Franky Family",
+      "Fire Tank Pirates"
+    ]
+  }
+]

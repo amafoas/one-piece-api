@@ -1,0 +1,11 @@
+# Go module dependencies (created by go mod command)
+/go.sum
+
+# Logs
+*.log
+
+# Editor backup files
+*~
+
+# Linux scripts
+*.sh

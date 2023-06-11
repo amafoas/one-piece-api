@@ -1,0 +1,34 @@
+[
+  {
+    "_id": "gomu_gomu_no_mi",
+    "name": "Gomu Gomu no Mi",
+    "type": "Paramecia",
+    "meaning": "Rubber Human",
+    "first_apparition": [
+      "Chapter 1",
+      "Episode 4"
+    ],
+    "first_usage": [
+      "Chapter 1",
+      "Episode 1"
+    ],
+    "current_user": "Monkey D Luffy",
+    "previous_user": ""
+  },
+  {
+    "_id": "mera_mera_no_mi",
+    "name": "Mera Mera no Mi",
+    "type": "Logia",
+    "meaning": "Sound of fire burning",
+    "first_apparition": [
+      "Chapter 700",
+      "Episode 629"
+    ],
+    "first_usage": [
+      "Chapter 158",
+      "Episode 94"
+    ],
+    "current_user": "Sabo",
+    "previous_user": "Portgas D Ace"
+  }
+]

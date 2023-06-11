@@ -1,0 +1,25 @@
+[
+  {
+    "_id": "monkey_d_luffy",
+    "name": "Monkey D Luffy",
+    "age": 19,
+    "status": "Alive",
+    "devil_fruit": "Gomu Gomu no Mi",
+    "devil_fruit_id": "gomu_gomu_no_mi",
+    "debut": [
+      "Chapter 1",
+      "Episode 1"
+    ],
+    "main_affiliation": "Straw Hat Pirates",
+    "other_affiliations": [
+      "Dadan Family",
+      "Ninja-Pirate-Mink-Samurai Alliance"
+    ],
+    "occupations": "Pirate Captain",
+    "origin": "East Blue",
+    "race": "Human",
+    "bounty": "3,000,000,000",
+    "birthday": "May 5th",
+    "height": "174 cm"
+  }
+]
