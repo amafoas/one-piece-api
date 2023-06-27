@@ -7,5 +7,11 @@ import (
 )
 
 func ConfigureEpisodeRoutes(r *gin.Engine) {
-	r.GET("/episode/:num", handlers.EpisodeByNumber)
+	r.GET("/episode/:id", handlers.FindEpisodeByID)
+
+	r.POST("/episode", handlers.CreateEpisode)
+
+	r.PUT("/episode/:id", handlers.UpdateEpisode)
+
+	r.DELETE("/episode/:id", handlers.DeleteEpisode)
 }

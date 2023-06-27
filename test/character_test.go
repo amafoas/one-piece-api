@@ -1,18 +1,17 @@
 package test
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"one-piece-api/api/models"
-	"one-piece-api/api/routers"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 var testCharacter = models.Character{
@@ -33,57 +32,108 @@ var testCharacter = models.Character{
 	Height:           "193 cm",
 }
 
-func configCharacterRoutesTest(db *mongo.Database) {
-	log.Println("Character routes test setup")
-	routers.ConfigureCharacterRoutes(router)
-
-	collection := db.Collection("characters")
-
-	_, err := collection.InsertOne(context.TODO(), testCharacter)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Test character inserted in the database.")
-}
-func TestGetCharacterByID(t *testing.T) {
-	path := fmt.Sprintf("/character/%s", testCharacter.ID)
-	req, _ := http.NewRequest("GET", path, nil)
-
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
-
-	assert.Equal(t, http.StatusOK, response.Code, "Incorrect status code")
-
-	expectedBody, err := json.Marshal(testCharacter)
-	if err != nil {
-		t.Error("Error while trying to marshal")
-	}
-	assert.Equal(t, expectedBody, response.Body.Bytes(), "Wrong Answer Body")
+type CharacterTestSuite struct {
+	suite.Suite
 }
 
-func TestGetCharacterNotFound(t *testing.T) {
-	path := fmt.Sprintf("/character/%s", "null")
-	req, _ := http.NewRequest("GET", path, nil)
+func (suite *CharacterTestSuite) Test1InsertCharacter() {
+	characterJSON, err := json.Marshal(testCharacter)
+	require.NoError(suite.T(), err)
 
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
+	// Create a test HTTP request
+	req, err := http.NewRequest("POST", "/character", bytes.NewBuffer(characterJSON))
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusNotFound, response.Code, "Incorrect status code")
+	assert.Equal(suite.T(), http.StatusCreated, recorder.Code)
 }
 
-func TestGetCharacterByFruit(t *testing.T) {
-	path := fmt.Sprintf("/character/fruit/%s", testCharacter.DevilFruitID)
-	req, _ := http.NewRequest("GET", path, nil)
+func (suite *CharacterTestSuite) Test2GetCharacterByID() {
+	route := fmt.Sprintf("/character/%s", testCharacter.ID)
 
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
+	// Create a test HTTP request
+	req, err := http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, response.Code, "Incorrect status code")
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
 
-	expectedBody, err := json.Marshal(testCharacter)
-	if err != nil {
-		t.Error("Error while trying to marshal")
-	}
-	assert.Equal(t, expectedBody, response.Body.Bytes(), "Wrong Answer Body")
+	var reponseCharacter models.Character
+	err = json.Unmarshal(recorder.Body.Bytes(), &reponseCharacter)
+	require.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), testCharacter, reponseCharacter)
+}
+
+func (suite *CharacterTestSuite) Test3UpdateCharacter() {
+	route := fmt.Sprintf("/character/%s", testCharacter.ID)
+
+	payload := []byte(`{
+		"name": "Updated name",
+		"origin": "Updated origin"
+		}`)
+	// Create a test HTTP request
+	req, err := http.NewRequest("PUT", route, bytes.NewBuffer(payload))
+	require.NoError(suite.T(), err)
+	req.Header.Set("Content-Type", "application/json")
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	// Send a new GET request to retrieve the updated character
+	req, err = http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+	// Reset the ResponseRecorder for the new request
+	recorder = httptest.NewRecorder()
+	// Send the test HTTP request to the router again
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	var responseCharacter models.Character
+	err = json.Unmarshal(recorder.Body.Bytes(), &responseCharacter)
+	require.NoError(suite.T(), err)
+
+	updatedCharacter := testCharacter
+	updatedCharacter.Name = "Updated name"
+	updatedCharacter.Origin = "Updated origin"
+
+	assert.Equal(suite.T(), updatedCharacter, responseCharacter)
+}
+
+func (suite *CharacterTestSuite) Test4DeleteCharacter() {
+	route := fmt.Sprintf("/character/%s", testCharacter.ID)
+
+	// Create a test HTTP request
+	req, err := http.NewRequest("DELETE", route, nil)
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	// Try to get the deleted character
+	getReq, err := http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+
+	recorder = httptest.NewRecorder()
+	router.ServeHTTP(recorder, getReq)
+
+	// Check that the character has been removed
+	assert.Equal(suite.T(), http.StatusNotFound, recorder.Code)
+}
+
+func TestCharacterSuite(t *testing.T) {
+	suite.Run(t, new(CharacterTestSuite))
 }

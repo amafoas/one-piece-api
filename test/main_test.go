@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"one-piece-api/api/repositories"
+	"one-piece-api/api/routers"
 	"os"
 	"testing"
 
@@ -23,15 +24,18 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db.Drop(context.TODO())
+	err = db.Drop(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	router = gin.Default()
 
-	configChapterRoutesTest(db)
-	configEpisodeRoutesTest(db)
-	configDevilFruitRoutesTest(db)
-	configCrewRoutesTest(db)
-	configCharacterRoutesTest(db)
+	routers.ConfigureChapterRoutes(router)
+	routers.ConfigureCharacterRoutes(router)
+	routers.ConfigureCrewRoutes(router)
+	routers.ConfigureDevilFruitsRoutes(router)
+	routers.ConfigureEpisodeRoutes(router)
 
 	exitCode := m.Run()
 	os.Exit(exitCode)

@@ -1,18 +1,18 @@
 package test
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"one-piece-api/api/models"
-	"one-piece-api/api/routers"
 	"testing"
 
+	"one-piece-api/api/models"
+
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 var testCrew = models.Crew{
@@ -27,42 +27,108 @@ var testCrew = models.Crew{
 	Allies:          []string{"Super pirate allies crew"},
 }
 
-func configCrewRoutesTest(db *mongo.Database) {
-	log.Println("Crew routes test setup")
-	routers.ConfigureCrewRoutes(router)
-
-	collection := db.Collection("crews")
-
-	_, err := collection.InsertOne(context.TODO(), testCrew)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Test crew inserted in the database.")
+type CrewTestSuite struct {
+	suite.Suite
 }
 
-func TestGetCrewByID(t *testing.T) {
-	path := fmt.Sprintf("/crew/%s", testCrew.ID)
-	req, _ := http.NewRequest("GET", path, nil)
+func (suite *CrewTestSuite) Test1InsertCrew() {
+	crewJSON, err := json.Marshal(testCrew)
+	require.NoError(suite.T(), err)
 
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
+	// Create a test HTTP request
+	req, err := http.NewRequest("POST", "/crew", bytes.NewBuffer(crewJSON))
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, response.Code, "Incorrect status code")
-
-	expectedBody, err := json.Marshal(testCrew)
-	if err != nil {
-		t.Error("Error while trying to marshal")
-	}
-	assert.Equal(t, expectedBody, response.Body.Bytes(), "Wrong Answer Body")
+	assert.Equal(suite.T(), http.StatusCreated, recorder.Code)
 }
 
-func TestGetCrewNotFound(t *testing.T) {
-	path := fmt.Sprintf("/crew/%s", "invalid")
-	req, _ := http.NewRequest("GET", path, nil)
+func (suite *CrewTestSuite) Test2GetCrewByID() {
+	route := fmt.Sprintf("/crew/%s", testCrew.ID)
 
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
+	// Create a test HTTP request
+	req, err := http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusNotFound, response.Code, "Incorrect status code")
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	var reponseCrew models.Crew
+	err = json.Unmarshal(recorder.Body.Bytes(), &reponseCrew)
+	require.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), testCrew, reponseCrew)
+}
+
+func (suite *CrewTestSuite) Test3UpdateCrew() {
+	route := fmt.Sprintf("/crew/%s", testCrew.ID)
+
+	payload := []byte(`{
+		"name": "Updated name",
+		"captain": "Updated captain"
+		}`)
+	// Create a test HTTP request
+	req, err := http.NewRequest("PUT", route, bytes.NewBuffer(payload))
+	require.NoError(suite.T(), err)
+	req.Header.Set("Content-Type", "application/json")
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	// Send a new GET request to retrieve the updated crew
+	req, err = http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+	// Reset the ResponseRecorder for the new request
+	recorder = httptest.NewRecorder()
+	// Send the test HTTP request to the router again
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	var reponseCrew models.Crew
+	err = json.Unmarshal(recorder.Body.Bytes(), &reponseCrew)
+	require.NoError(suite.T(), err)
+
+	updatedCrew := testCrew
+	updatedCrew.Name = "Updated name"
+	updatedCrew.Captain = "Updated captain"
+
+	assert.Equal(suite.T(), updatedCrew, reponseCrew)
+}
+
+func (suite *CrewTestSuite) Test4DeleteCrew() {
+	route := fmt.Sprintf("/crew/%v", testCrew.ID)
+
+	// Create a test HTTP request
+	req, err := http.NewRequest("DELETE", route, nil)
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	// Try to get the deleted crew
+	getReq, err := http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+
+	recorder = httptest.NewRecorder()
+	router.ServeHTTP(recorder, getReq)
+
+	// Check that the crew has been removed
+	assert.Equal(suite.T(), http.StatusNotFound, recorder.Code)
+}
+
+func TestCrewSuite(t *testing.T) {
+	suite.Run(t, new(CrewTestSuite))
 }

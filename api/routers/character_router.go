@@ -7,9 +7,11 @@ import (
 )
 
 func ConfigureCharacterRoutes(r *gin.Engine) {
-	character := r.Group("/character")
-	{
-		character.GET("/:id", handlers.CharacterByID)
-		character.GET("/fruit/:fruit", handlers.CharacterByFruit)
-	}
+	r.GET("/character/:id", handlers.FindCharacterByID)
+
+	r.POST("/character", handlers.CreateCharacter)
+
+	r.PUT("/character/:id", handlers.UpdateCharacter)
+
+	r.DELETE("/character/:id", handlers.DeleteCharacter)
 }

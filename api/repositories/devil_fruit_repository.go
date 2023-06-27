@@ -1,28 +1,17 @@
 package repositories
 
 import (
-	"context"
-	"log"
-	"one-piece-api/api/models"
-
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func GetDevilFruitByID(id string) (*models.DevilFruit, error) {
-	db, err := GetDB()
-	if err != nil {
-		return nil, err
+type DevilFruitRepository struct {
+	*BaseRepository
+}
+
+func NewDevilFruitRepository(db *mongo.Database) *DevilFruitRepository {
+	return &DevilFruitRepository{
+		&BaseRepository{
+			Collection: db.Collection("devil_fruits"),
+		},
 	}
-	collection := db.Collection("devil_fruits")
-
-	fruit := &models.DevilFruit{}
-	filter := bson.M{"_id": id}
-
-	err = collection.FindOne(context.TODO(), filter).Decode(fruit)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return fruit, nil
 }

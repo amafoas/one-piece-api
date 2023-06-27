@@ -7,5 +7,11 @@ import (
 )
 
 func ConfigureCrewRoutes(r *gin.Engine) {
-	r.GET("/crew/:id", handlers.CrewByID)
+	r.GET("/crew/:id", handlers.FindCrewByID)
+
+	r.POST("/crew", handlers.CreateCrew)
+
+	r.PUT("/crew/:id", handlers.UpdateCrew)
+
+	r.DELETE("/crew/:id", handlers.DeleteCrew)
 }

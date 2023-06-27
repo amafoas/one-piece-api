@@ -1,9 +1,10 @@
 package models
 
 type Chapter struct {
-	Title   string `bson:"title"`
-	Volume  int    `bson:"volume"`
-	Chapter int    `bson:"chapter"`
-	Pages   int    `bson:"pages"`
-	Release string `bson:"release"`
+	ID      string `bson:"_id" json:"_id"`
+	Title   string `bson:"title" json:"title"`
+	Volume  int    `bson:"volume" json:"volume"`
+	Chapter int    `bson:"chapter" json:"chapter"`
+	Pages   int    `bson:"pages" json:"pages"`
+	Release string `bson:"release" json:"release"`
 }

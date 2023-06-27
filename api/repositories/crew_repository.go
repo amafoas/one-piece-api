@@ -1,28 +1,17 @@
 package repositories
 
 import (
-	"context"
-	"log"
-	"one-piece-api/api/models"
-
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func GetCrewByID(id string) (*models.Crew, error) {
-	db, err := GetDB()
-	if err != nil {
-		return nil, err
+type CrewRepository struct {
+	*BaseRepository
+}
+
+func NewCrewRepository(db *mongo.Database) *CrewRepository {
+	return &CrewRepository{
+		&BaseRepository{
+			Collection: db.Collection("crews"),
+		},
 	}
-	collection := db.Collection("crews")
-
-	crew := &models.Crew{}
-	filter := bson.M{"_id": id}
-
-	err = collection.FindOne(context.TODO(), filter).Decode(crew)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return crew, nil
 }

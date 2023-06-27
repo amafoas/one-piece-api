@@ -1,18 +1,18 @@
 package test
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"one-piece-api/api/models"
-	"one-piece-api/api/routers"
 	"testing"
 
+	"one-piece-api/api/models"
+
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 var testDevilFruit = models.DevilFruit{
@@ -26,42 +26,108 @@ var testDevilFruit = models.DevilFruit{
 	PreviousUser:    "",
 }
 
-func configDevilFruitRoutesTest(db *mongo.Database) {
-	log.Println("Devil fruits routes test setup")
-	routers.ConfigureDevilFruitsRoutes(router)
-
-	collection := db.Collection("devil_fruits")
-
-	_, err := collection.InsertOne(context.TODO(), testDevilFruit)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Test fruit inserted in the database.")
+type DevilFruitTestSuite struct {
+	suite.Suite
 }
 
-func TestGetDevilFruitByID(t *testing.T) {
-	path := fmt.Sprintf("/devil-fruit/%s", testDevilFruit.ID)
-	req, _ := http.NewRequest("GET", path, nil)
+func (suite *DevilFruitTestSuite) Test1InsertDevilFruit() {
+	devilFruitJSON, err := json.Marshal(testDevilFruit)
+	require.NoError(suite.T(), err)
 
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
+	// Create a test HTTP request
+	req, err := http.NewRequest("POST", "/devil-fruit", bytes.NewBuffer(devilFruitJSON))
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, response.Code, "Incorrect status code")
-
-	expectedBody, err := json.Marshal(testDevilFruit)
-	if err != nil {
-		t.Error("Error while trying to marshal")
-	}
-	assert.Equal(t, expectedBody, response.Body.Bytes(), "Wrong Answer Body")
+	assert.Equal(suite.T(), http.StatusCreated, recorder.Code)
 }
 
-func TestGetDevilFruitNotFound(t *testing.T) {
-	path := fmt.Sprintf("/devil-fruit/%s", "none-none-no-mi")
-	req, _ := http.NewRequest("GET", path, nil)
+func (suite *DevilFruitTestSuite) Test2GetDevilFruitByID() {
+	route := fmt.Sprintf("/devil-fruit/%v", testDevilFruit.ID)
 
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
+	// Create a test HTTP request
+	req, err := http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusNotFound, response.Code, "Incorrect status code")
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	var reponseDevilFruit models.DevilFruit
+	err = json.Unmarshal(recorder.Body.Bytes(), &reponseDevilFruit)
+	require.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), testDevilFruit, reponseDevilFruit)
+}
+
+func (suite *DevilFruitTestSuite) Test3UpdateDevilFruit() {
+	route := fmt.Sprintf("/devil-fruit/%v", testDevilFruit.ID)
+
+	payload := []byte(`{
+		"name": "Updated name",
+		"type": "Updated type"
+		}`)
+	// Create a test HTTP request
+	req, err := http.NewRequest("PUT", route, bytes.NewBuffer(payload))
+	require.NoError(suite.T(), err)
+	req.Header.Set("Content-Type", "application/json")
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	// Send a new GET request to retrieve the updated devil fruit
+	req, err = http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+	// Reset the ResponseRecorder for the new request
+	recorder = httptest.NewRecorder()
+	// Send the test HTTP request to the router again
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	var reponseDevilFruit models.DevilFruit
+	err = json.Unmarshal(recorder.Body.Bytes(), &reponseDevilFruit)
+	require.NoError(suite.T(), err)
+
+	updatedDevilFruit := testDevilFruit
+	updatedDevilFruit.Name = "Updated name"
+	updatedDevilFruit.Type = "Updated type"
+
+	assert.Equal(suite.T(), updatedDevilFruit, reponseDevilFruit)
+}
+
+func (suite *DevilFruitTestSuite) Test4DeleteDevilFruit() {
+	route := fmt.Sprintf("/devil-fruit/%v", testDevilFruit.ID)
+
+	// Create a test HTTP request
+	req, err := http.NewRequest("DELETE", route, nil)
+	require.NoError(suite.T(), err)
+	// Create a ResponseRecorder to capture the HTTP response
+	recorder := httptest.NewRecorder()
+	// Send the test HTTP request to the router
+	router.ServeHTTP(recorder, req)
+
+	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
+
+	// Try to get the deleted devil fruit
+	getReq, err := http.NewRequest("GET", route, nil)
+	require.NoError(suite.T(), err)
+
+	recorder = httptest.NewRecorder()
+	router.ServeHTTP(recorder, getReq)
+
+	// Check that the devil fruit has been removed
+	assert.Equal(suite.T(), http.StatusNotFound, recorder.Code)
+}
+
+func TestDevilFruitSuite(t *testing.T) {
+	suite.Run(t, new(DevilFruitTestSuite))
 }
