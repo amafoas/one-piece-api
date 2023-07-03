@@ -239,5 +239,5 @@ curl -X DELETE "http://localhost:8080/chapter/1"
 This project includes tests to ensure the correctness of the API routes. To run the tests, execute the following command:
 
 ```bash
-go test ./test
+go test ./test/...
 ```
