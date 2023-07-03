@@ -33,14 +33,36 @@ func GetDB() (*mongo.Database, error) {
 }
 
 type Repository interface {
-	FindByID(id interface{}) (interface{}, error)
 	Create(entity interface{}) error
-	Update(entity interface{}) error
+	FindByID(id interface{}, model interface{}) error
+	Update(id interface{}, updates interface{}) error
 	Delete(id interface{}) error
 }
 
 type BaseRepository struct {
 	Collection *mongo.Collection
+}
+
+func NewRepository(name string) (*BaseRepository, error) {
+	db, err := GetDB()
+	if err != nil {
+		return nil, err
+	}
+
+	repository := &BaseRepository{
+		Collection: db.Collection(name),
+	}
+
+	return repository, nil
+}
+
+func (r *BaseRepository) Create(entity interface{}) error {
+	_, err := r.Collection.InsertOne(context.TODO(), entity)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *BaseRepository) FindByID(id interface{}, model interface{}) error {
@@ -54,18 +76,9 @@ func (r *BaseRepository) FindByID(id interface{}, model interface{}) error {
 	return nil
 }
 
-func (r *BaseRepository) Create(entity interface{}) error {
-	_, err := r.Collection.InsertOne(context.TODO(), entity)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *BaseRepository) Update(id interface{}, entity interface{}) error {
+func (r *BaseRepository) Update(id interface{}, updates interface{}) error {
 	filter := bson.M{"_id": id}
-	update := bson.M{"$set": entity}
+	update := bson.M{"$set": updates}
 
 	_, err := r.Collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {

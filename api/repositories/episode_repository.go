@@ -1,17 +1,16 @@
 package repositories
 
-import (
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
 type EpisodeRepository struct {
 	*BaseRepository
 }
 
-func NewEpisodeRepository(db *mongo.Database) *EpisodeRepository {
-	return &EpisodeRepository{
-		&BaseRepository{
-			Collection: db.Collection("episodes"),
-		},
+func NewEpisodeRepository() (*EpisodeRepository, error) {
+	repo, err := NewRepository("episodes")
+	if err != nil {
+		return nil, err
 	}
+
+	episodeRepo := &EpisodeRepository{repo}
+
+	return episodeRepo, nil
 }

@@ -1,17 +1,16 @@
 package repositories
 
-import (
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
 type ChapterRepository struct {
 	*BaseRepository
 }
 
-func NewChapterRepository(db *mongo.Database) *ChapterRepository {
-	return &ChapterRepository{
-		&BaseRepository{
-			Collection: db.Collection("chapters"),
-		},
+func NewChapterRepository() (*ChapterRepository, error) {
+	repo, err := NewRepository("chapters")
+	if err != nil {
+		return nil, err
 	}
+
+	chapterRepo := &ChapterRepository{repo}
+
+	return chapterRepo, nil
 }

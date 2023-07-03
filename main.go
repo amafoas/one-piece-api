@@ -2,12 +2,12 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
 	"one-piece-api/api/routers"
-	"one-piece-api/utils"
 )
 
 func main() {
@@ -26,6 +26,6 @@ func main() {
 	routers.ConfigureChapterRoutes(r)
 	routers.ConfigureEpisodeRoutes(r)
 
-	PORT := utils.GetEnvVariable("PORT")
+	PORT := os.Getenv("PORT")
 	r.Run(":" + PORT)
 }

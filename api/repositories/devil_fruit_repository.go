@@ -1,17 +1,16 @@
 package repositories
 
-import (
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
 type DevilFruitRepository struct {
 	*BaseRepository
 }
 
-func NewDevilFruitRepository(db *mongo.Database) *DevilFruitRepository {
-	return &DevilFruitRepository{
-		&BaseRepository{
-			Collection: db.Collection("devil_fruits"),
-		},
+func NewDevilFruitRepository() (*DevilFruitRepository, error) {
+	repo, err := NewRepository("devil_fruits")
+	if err != nil {
+		return nil, err
 	}
+
+	devilFruitRepo := &DevilFruitRepository{repo}
+
+	return devilFruitRepo, nil
 }

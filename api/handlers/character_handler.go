@@ -1,104 +1,48 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
+	"reflect"
+
 	"one-piece-api/api/models"
 	"one-piece-api/api/repositories"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateCharacter(c *gin.Context) {
-	var newCharacter models.Character
-	if err := c.ShouldBindJSON(&newCharacter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	log.Println(newCharacter)
+type CharacterHandler struct {
+	*BaseHandler
+}
 
-	db, err := repositories.GetDB()
+func NewCharacterHandler(c *gin.Context) *CharacterHandler {
+	repo, err := repositories.NewCharacterRepository()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
-		return
+		return nil
 	}
+	model := reflect.TypeOf(models.Character{})
 
-	characterRepository := repositories.NewCharacterRepository(db)
-	err = characterRepository.Create(newCharacter)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+	return &CharacterHandler{
+		BaseHandler: NewHandler(repo, model),
 	}
+}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Document created successfully"})
+func CreateCharacter(c *gin.Context) {
+	handler := NewCharacterHandler(c)
+	handler.CreateEntity(c)
 }
 
 func FindCharacterByID(c *gin.Context) {
-	id := c.Param("id")
-
-	db, err := repositories.GetDB()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
-		return
-	}
-
-	characterRepository := repositories.NewCharacterRepository(db)
-
-	var character models.Character
-	err = characterRepository.FindByID(id, &character)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
-			return
-		}
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, character)
+	handler := NewCharacterHandler(c)
+	handler.FindEntityByID(c)
 }
 
 func UpdateCharacter(c *gin.Context) {
-	id := c.Param("id")
-
-	var updatedChapter map[string]interface{}
-	if err := c.ShouldBindJSON(&updatedChapter); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	db, err := repositories.GetDB()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
-		return
-	}
-
-	characterRepository := repositories.NewCharacterRepository(db)
-	err = characterRepository.Update(id, updatedChapter)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Document updated successfully"})
+	handler := NewCharacterHandler(c)
+	handler.UpdateEntity(c)
 }
 
 func DeleteCharacter(c *gin.Context) {
-	id := c.Param("id")
-
-	db, err := repositories.GetDB()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Server error"})
-		return
-	}
-
-	characterRepository := repositories.NewCharacterRepository(db)
-	err = characterRepository.Delete(id)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Document deleted successfully"})
+	handler := NewCharacterHandler(c)
+	handler.DeleteEntity(c)
 }
